@@ -67,6 +67,13 @@ def _parser():
         'jobs-disable', help='Disable the given job(s)')
     parser_jobs_disable.add_argument('job_name', metavar='job-name', help='the Jenkins job name(s) (regex)')
     parser_jobs_disable.set_defaults(func=jobs_disable)
+    # jobs copy
+    parser_jobs_copy = subparsers.add_parser(
+        'jobs-copy', help='Copy the given job(s)')
+    parser_jobs_copy.add_argument('job_name', metavar='job-name', help='the Jenkins job name(s) (regex)')
+    parser_jobs_copy.add_argument('job_name_pattern', metavar='job-name-pattern', help='the Jenkins job name search pattern (regex)')
+    parser_jobs_copy.add_argument('job_name_repl', metavar='job-name-repl', help='the Jenkins job name replacement')
+    parser_jobs_copy.set_defaults(func=jobs_copy)
     # nodes list
     parser_nodes_list = subparsers.add_parser(
         'nodes-list', help='List all nodes')
@@ -83,6 +90,18 @@ def jobs_disable(args):
         if regex.match(job['fullname']):
             print(f"Disable job {job['fullname']}")
             jenkins.disable_job(job['fullname'])
+
+
+def jobs_copy(args):
+    url, user, password = _get_profile(args)
+    jenkins = _jenkins(url, user, password)
+    regex = re.compile(args.job_name)
+    for job in jenkins.get_jobs():
+        if regex.match(job['fullname']):
+            job_name_new = re.sub(args.job_name_pattern, args.job_name_repl, job['fullname'])
+            if job['fullname'] != job_name_new:
+                print(f"Copy job {job['fullname']:60} -> {job_name_new}")
+                jenkins.copy_job(job['fullname'], job_name_new)
 
 
 def nodes_list(args):
