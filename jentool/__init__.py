@@ -72,6 +72,11 @@ def _parser():
         'jobs-delete', help='Delete the given job(s)')
     parser_jobs_delete.add_argument('job_name', metavar='job-name', help='the Jenkins job name(s) (regex)')
     parser_jobs_delete.set_defaults(func=jobs_delete)
+    # jobs list
+    parser_jobs_list = subparsers.add_parser(
+        'jobs-list', help='List the given job(s)')
+    parser_jobs_list.add_argument('job_name', metavar='job-name', help='the Jenkins job name(s) (regex)')
+    parser_jobs_list.set_defaults(func=jobs_list)
     # jobs copy
     parser_jobs_copy = subparsers.add_parser(
         'jobs-copy', help='Copy the given job(s)')
@@ -105,6 +110,15 @@ def jobs_delete(args):
         if regex.match(job['fullname']):
             jenkins.delete_job(job['fullname'])
             print(f"Deleted job {job['fullname']}")
+
+
+def jobs_list(args):
+    url, user, password = _get_profile(args)
+    jenkins = _jenkins(url, user, password)
+    regex = re.compile(args.job_name)
+    for job in jenkins.get_jobs():
+        if regex.match(job['fullname']):
+            print(f"{job['fullname']}")
 
 
 def jobs_copy(args):
