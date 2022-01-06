@@ -138,12 +138,12 @@ def nodes_list(args):
     url, user, password = _get_profile(args)
     jenkins = _jenkins(url, user, password)
     t = PrettyTable()
-    t.field_names = ['Name', 'Labels']
+    t.field_names = ['Name', 'Labels', 'Executors', 'Offline']
     for node in jenkins.get_nodes():
         if jenkins.node_exists(node['name']):
             ni = jenkins.get_node_info(node['name'])
             labels = [l['name'] for l in ni['assignedLabels'] if l['name'] != node['name']]
-            t.add_row([node["name"], ", ".join(labels)])
+            t.add_row([node["name"], ", ".join(labels), ni['numExecutors'], node['offline']])
     print(t)
 
 
