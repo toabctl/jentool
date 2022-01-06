@@ -7,6 +7,7 @@ import os
 import sys
 
 import jenkins
+from prettytable import PrettyTable
 
 
 # snaps do set $HOME to something like
@@ -136,12 +137,14 @@ def jobs_copy(args):
 def nodes_list(args):
     url, user, password = _get_profile(args)
     jenkins = _jenkins(url, user, password)
-    print(f'{"Name":30} Labels')
+    t = PrettyTable()
+    t.field_names = ['Name', 'Labels']
     for node in jenkins.get_nodes():
         if jenkins.node_exists(node['name']):
             ni = jenkins.get_node_info(node['name'])
             labels = [l['name'] for l in ni['assignedLabels'] if l['name'] != node['name']]
-            print(f'{node["name"]:30} {", ".join(labels):10}')
+            t.add_row([node["name"], ", ".join(labels)])
+    print(t)
 
 
 def main():
