@@ -130,8 +130,11 @@ def jobs_copy(args):
         if regex.match(job['fullname']):
             job_name_new = re.sub(args.job_name_pattern, args.job_name_repl, job['fullname'])
             if job['fullname'] != job_name_new:
-                print(f"Copy job {job['fullname']:60} -> {job_name_new}")
-                jenkins.copy_job(job['fullname'], job_name_new)
+                if jenkins.job_exists(job_name_new):
+                    print(f"Job {job_name_new} already exists. skipping copy ...")
+                else:
+                    print(f"Copy job {job['fullname']:60} -> {job_name_new}")
+                    jenkins.copy_job(job['fullname'], job_name_new)
 
 
 def nodes_list(args):
