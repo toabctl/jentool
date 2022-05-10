@@ -78,6 +78,11 @@ def _parser():
         'jobs-list', help='List the given job(s)')
     parser_jobs_list.add_argument('job_name', metavar='job-name', help='the Jenkins job name(s) (regex)')
     parser_jobs_list.set_defaults(func=jobs_list)
+    # jobs config
+    parser_jobs_config = subparsers.add_parser(
+        'jobs-config', help='Get config(s) for the given job(s)')
+    parser_jobs_config.add_argument('job_name', metavar='job-name', help='the Jenkins job name(s) (regex)')
+    parser_jobs_config.set_defaults(func=jobs_config)
     # jobs copy
     parser_jobs_copy = subparsers.add_parser(
         'jobs-copy', help='Copy the given job(s)')
@@ -120,6 +125,15 @@ def jobs_list(args):
     for job in jenkins.get_jobs():
         if regex.match(job['fullname']):
             print(f"{job['fullname']}")
+
+
+def jobs_config(args):
+    url, user, password = _get_profile(args)
+    jenkins = _jenkins(url, user, password)
+    regex = re.compile(args.job_name)
+    for job in jenkins.get_jobs():
+        if regex.match(job['fullname']):
+            print(jenkins.get_job_config(job['fullname']))
 
 
 def jobs_copy(args):
