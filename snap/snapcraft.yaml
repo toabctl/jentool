@@ -1,0 +1,28 @@
+name: jentool
+version: git
+summary: command line tool for doing basic Jenkins maintenance tasks
+description: |
+  jentool is a command line tool for doing basic Jenkins maintenance tasks.
+base: core22
+confinement: strict
+source-code: https://github.com/toabctl/jentool
+issues: https://github.com/toabctl/jentool/issues
+
+plugs:
+  dot-config-jentool:
+    interface: personal-files
+    read:
+    - $HOME/.config/jentool.ini
+
+parts:
+  jentool:
+    plugin: python
+    source: .
+
+apps:
+  jentool:
+    command: bin/jentool
+    plugs:
+      - home
+      - network
+      - dot-config-jentool
