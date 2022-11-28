@@ -94,6 +94,12 @@ def _parser():
     parser_nodes_list = subparsers.add_parser(
         'nodes-list', help='List all nodes')
     parser_nodes_list.set_defaults(func=nodes_list)
+    # jobs failing
+    parser_jobs_failing = subparsers.add_parser(
+        'jobs-failing', help='List failing jobs')
+    parser_jobs_failing.add_argument('pattern', metavar='pattern', help='the Jenkins job name(s) (regex)')
+    parser_jobs_failing.add_argument('--max-score', '-m', default=0, type=int, help='the maximum health score to look for')
+    parser_jobs_failing.set_defaults(func=jobs_failing)
 
     return parser
 
@@ -161,6 +167,23 @@ def nodes_list(args):
             ni = jenkins.get_node_info(node['name'])
             labels = [l['name'] for l in ni['assignedLabels'] if l['name'] != node['name']]
             t.add_row([node["name"], ", ".join(labels), ni['numExecutors'], node['offline']])
+    print(t)
+
+
+def jobs_failing(args):
+    url, user, password = _get_profile(args)
+    jenkins = _jenkins(url, user, password)
+
+    pattern = args.pattern
+    max_score = args.max_score
+
+    t = PrettyTable()
+    t.field_names = ['Name', 'Score', 'URL']
+    t.align = 'l'
+    for info in jenkins.get_job_info_regex(pattern):
+        if info['color'] == 'red' and info['healthReport'][0]['score'] <= max_score:
+            t.add_row([info["name"], info['healthReport'][0]["score"], info['url']])
+
     print(t)
 
 
