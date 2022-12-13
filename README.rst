@@ -12,7 +12,7 @@ Into a `virtualenv`::
   source venv/bin/activate
   pip install -e .
   # now you can use the tool
-  jentoo -h
+  jentool -h
 
 
 Configuration
