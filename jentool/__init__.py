@@ -2,12 +2,14 @@
 
 import argparse
 import configparser
+import datetime
 import re
 import os
 import sys
 
 import jenkins
 from prettytable import PrettyTable
+from dateutil.relativedelta import relativedelta
 
 
 # snaps do set $HOME to something like
@@ -100,6 +102,11 @@ def _parser():
     parser_jobs_failing.add_argument('pattern', metavar='pattern', help='the Jenkins job name(s) (regex)')
     parser_jobs_failing.add_argument('--max-score', '-m', default=0, type=int, help='the maximum health score to look for')
     parser_jobs_failing.set_defaults(func=jobs_failing)
+    # jobs running
+    parser_builds_running = subparsers.add_parser(
+        'builds-running', help='List running builds')
+    parser_builds_running.add_argument('--longer-than', default=0, type=int, help='Only builds running longer than X seconds')
+    parser_builds_running.set_defaults(func=builds_running)
 
     return parser
 
@@ -184,6 +191,27 @@ def jobs_failing(args):
         if info['color'] == 'red' and info['healthReport'][0]['score'] <= max_score:
             t.add_row([info["name"], info['healthReport'][0]["score"], info['url']])
 
+    print(t)
+
+
+def builds_running(args):
+    url, user, password = _get_profile(args)
+    jenkins = _jenkins(url, user, password)
+
+    t = PrettyTable()
+    t.field_names = ['Name', 'Started at', 'Url', 'Worker']
+    t.align = 'l'
+
+    for build in jenkins.get_running_builds():
+        build_info = jenkins.get_build_info(build['name'], build['number'])
+        now_dt = datetime.datetime.now()
+        if datetime.datetime.timestamp(now_dt) - build_info['timestamp'] / 1000 > args.longer_than:
+            timestamp_dt = datetime.datetime.fromtimestamp(build_info['timestamp'] / 1000)
+            delta_dt = relativedelta(now_dt, timestamp_dt)
+            t.add_row([build_info['fullDisplayName'],
+                       f'{timestamp_dt} ({delta_dt.days} days, {delta_dt.hours} hours)',
+                       build_info['url'],
+                       build_info['builtOn']])
     print(t)
 
 
