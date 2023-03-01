@@ -74,6 +74,7 @@ def _parser():
     parser_jobs_delete = subparsers.add_parser(
         'jobs-delete', help='Delete the given job(s)')
     parser_jobs_delete.add_argument('job_name', metavar='job-name', help='the Jenkins job name(s) (regex)')
+    parser_jobs_delete.add_argument('--disabled-only', action='store_true', help='Only delete disabled jobs')
     parser_jobs_delete.set_defaults(func=jobs_delete)
     # jobs list
     parser_jobs_list = subparsers.add_parser(
@@ -127,6 +128,11 @@ def jobs_delete(args):
     regex = re.compile(args.job_name)
     for job in jenkins.get_jobs():
         if regex.match(job['fullname']):
+            if args.disabled_only:
+                # ignore if the job is enabled
+                job_info = jenkins.get_job_info(job['fullname'])
+                if job_info['disabled'] is False:
+                    continue
             jenkins.delete_job(job['fullname'])
             print(f"Deleted job {job['fullname']}")
 
