@@ -103,6 +103,11 @@ def _parser():
     parser_jobs_failing.add_argument('pattern', metavar='pattern', help='the Jenkins job name(s) (regex)')
     parser_jobs_failing.add_argument('--max-score', '-m', default=0, type=int, help='the maximum health score to look for')
     parser_jobs_failing.set_defaults(func=jobs_failing)
+    # jobs unstable
+    parser_jobs_unstable = subparsers.add_parser(
+        'jobs-unstable', help='List unstable jobs')
+    parser_jobs_unstable.add_argument('pattern', metavar='pattern', help='the Jenkins job name(s) (regex)')
+    parser_jobs_unstable.set_defaults(func=jobs_unstable)
     # jobs running
     parser_builds_running = subparsers.add_parser(
         'builds-running', help='List running builds')
@@ -196,6 +201,21 @@ def jobs_failing(args):
     for info in jenkins.get_job_info_regex(pattern):
         if info['color'] == 'red' and info['healthReport'][0]['score'] <= max_score:
             t.add_row([info["name"], info['healthReport'][0]["score"], info['url']])
+
+    print(t)
+
+
+def jobs_unstable(args):
+    url, user, password = _get_profile(args)
+    jenkins = _jenkins(url, user, password)
+
+    t = PrettyTable()
+    t.field_names = ['Name', 'URL']
+    t.align = 'l'
+    for info in jenkins.get_job_info_regex(args.pattern):
+        if info['lastUnstableBuild']:
+            if info['lastUnstableBuild']['number'] == info['lastBuild']['number']:
+                t.add_row([info["name"], info['url']])
 
     print(t)
 
