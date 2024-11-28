@@ -100,8 +100,7 @@ def _parser():
     # jobs failing
     parser_jobs_failing = subparsers.add_parser(
         'jobs-failing', help='List failing jobs')
-    parser_jobs_failing.add_argument('pattern', metavar='pattern', help='the Jenkins job name(s) (regex)')
-    parser_jobs_failing.add_argument('--max-score', '-m', default=0, type=int, help='the maximum health score to look for')
+    parser_jobs_failing.add_argument('view', metavar='view', help='the Jenkins view')
     parser_jobs_failing.set_defaults(func=jobs_failing)
     # jobs unstable
     parser_jobs_unstable = subparsers.add_parser(
@@ -192,15 +191,12 @@ def jobs_failing(args):
     url, user, password = _get_profile(args)
     jenkins = _jenkins(url, user, password)
 
-    pattern = args.pattern
-    max_score = args.max_score
-
     t = PrettyTable()
-    t.field_names = ['Name', 'Score', 'URL']
+    t.field_names = ['Name', 'URL']
     t.align = 'l'
-    for info in jenkins.get_job_info_regex(pattern):
-        if info['color'] == 'red' and info['healthReport'][0]['score'] <= max_score:
-            t.add_row([info["name"], info['healthReport'][0]["score"], info['url']])
+    for info in jenkins.get_jobs(view_name=args.view):
+        if info['color'] == 'red':
+            t.add_row([info["name"], info['url']])
 
     print(t)
 
